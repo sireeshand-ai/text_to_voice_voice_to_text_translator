@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text & Voice Translator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>Translator</h1>
+
+    <textarea id="inputText" placeholder="Enter text or use voice input..."></textarea>
+
+    <textarea id="outputText" placeholder="Translated text will appear here..." readonly></textarea>
+    
+
+    <div class="selectors">
+        <select id="input_lang">
+    <option value="en">English</option>
+    <option value="hi">Hindi</option>
+    <option value="te">Telugu</option>
+    <option value="ta">Tamil</option>
+    <option value="fr">French</option>
+    <option value="es">Spanish</option>
+    <option value="de">German</option>
+    <option value="it">Italian</option>
+    <option value="ja">Japanese</option>
+    <option value="ko">Korean</option>
+    <option value="zh-cn">Chinese</option>
+</select>
+
+<select id="output_lang">
+    <option value="hi">Hindi</option>
+    <option value="en">English</option>
+    <option value="te">Telugu</option>
+    <option value="ta">Tamil</option>
+    <option value="fr">French</option>
+    <option value="es">Spanish</option>
+    <option value="de">German</option>
+    <option value="it">Italian</option>
+    <option value="ja">Japanese</option>
+    <option value="ko">Korean</option>
+    <option value="zh-cn">Chinese</option>
+</select>
+
+    </div>
+
+    <button onclick="translateText()">🔄 Translate</button>
+    <button onclick="speakText()">🔊 Speak</button>
+    <button onclick="startVoiceInput()">🎤 Voice Input</button>
+    
+</div>
+
+<script>
+
+function translateText() {
+    const text = document.getElementById("inputText").value.trim();
+    const inputLang = document.getElementById("input_lang").value;
+    const outputLang = document.getElementById("output_lang").value;
+
+    if (!text) {
+        alert("Please enter or speak some text first!");
+        return;
+    }
+
+    // ❌ Same language selected
+    if (inputLang === outputLang) {
+        alert("Input and Output languages cannot be the same!");
+        return;
+    }
+
+   
+   
+
+    fetch('/translate', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `text=${encodeURIComponent(text)}&input_lang=${inputLang}&output_lang=${outputLang}`
+    })
+    .then(res => res.text())
+    .then(data => {
+        document.getElementById("outputText").value = data;
+    });
+}
+
+function speakText() {
+    const text = document.getElementById("outputText").value;
+    const lang = document.getElementById("output_lang").value;
+
+    if (!text) {
+        alert("Please translate text first!");
+        return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+
+    window.speechSynthesis.cancel(); // stop previous speech
+    window.speechSynthesis.speak(utterance);
+}
+
+function startVoiceInput() {
+    if (!('webkitSpeechRecognition' in window)) {
+        alert("Voice input not supported in this browser. Use Chrome.");
+        return;
+    }
+
+    const recognition = new webkitSpeechRecognition();
+    recognition.lang = document.getElementById("input_lang").value;
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = function () {
+        alert("Listening... Speak now 🎙️");
+    };
+
+    recognition.onresult = function (event) {
+        const voiceText = event.results[0][0].transcript;
+        document.getElementById("inputText").value = voiceText;
+    };
+
+    recognition.onerror = function () {
+        alert("Voice input error. Try again.");
+    };
+
+    recognition.start();
+}
+
+
+</script>
+
+</body>
+</html>
